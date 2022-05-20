@@ -1,4 +1,6 @@
 *.vim
 *.pyc
+*.pdf
 log/
 visual/
+data/
