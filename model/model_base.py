@@ -3,7 +3,6 @@
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 
 class Info(object):
@@ -53,11 +52,11 @@ class Model(nn.Module):
     packing embedding initialization, embedding choosing in forward
 
     NEED IMPLEMENT:
-    - `propagate`: all raw embeddings -> processed embeddings(user/bundle)
-    - `predict`: processed embeddings of targets(users/bundles inputs) -> scores
+    - `propagate`: all raw embeddings -> processed embeddings(user/list)
+    - `predict`: processed embeddings of targets(users/lists inputs) -> scores
 
     OPTIONAL:
-    - `regularize`: processed embeddings of targets(users/bundles inputs) -> extra loss(default: L2)
+    - `regularize`: processed embeddings of targets(users/lists inputs) -> extra loss(default: L2)
     - `get_infotype`: the correct type of `info`(default: `object`)
     '''
 
@@ -71,7 +70,7 @@ class Model(nn.Module):
         self.embedding_size = info['embedding_size']
         self.embed_L2_norm = info['embed_L2_norm']
         self.num_users = dataset.num_users
-        self.num_bundles = dataset.num_bundles
+        self.num_lists = dataset.num_lists
         self.num_items = dataset.num_items
         if create_embeddings:
             # embeddings
@@ -79,13 +78,13 @@ class Model(nn.Module):
                 torch.FloatTensor(self.num_users, self.embedding_size))
             nn.init.xavier_normal_(self.users_feature)
             self.bundles_feature = nn.Parameter(
-                torch.FloatTensor(self.num_bundles, self.embedding_size))
+                torch.FloatTensor(self.num_lists, self.embedding_size))
             nn.init.xavier_normal_(self.bundles_feature)
- 
+
     def propagate(self, *args, **kwargs):
         '''
         raw embeddings -> embeddings for predicting
-        return (user's,bundle's)
+        return (user's,list's)
         '''
         raise NotImplementedError
 
@@ -101,21 +100,20 @@ class Model(nn.Module):
         embeddings of targets for predicting -> extra loss(default: L2 loss...)
         '''
         loss = self.embed_L2_norm * \
-            ((users_feature ** 2).sum()+(bundles_feature**2).sum())
+            ((users_feature ** 2).sum() + (bundles_feature**2).sum())
         return loss
 
-    def forward(self, users, bundles):
+    def forward(self, users, lists):
         users_feature, bundles_feature = self.propagate()
-        bundles_embedding = bundles_feature[bundles]
+        lists_embedding = bundles_feature[lists]
         users_embedding = users_feature[users].expand(
-            -1, bundles.shape[1], -1)  
-        pred = self.predict(users_embedding, bundles_embedding)
-        loss = self.regularize(users_embedding, bundles_embedding)
+            -1, lists.shape[1], -1)
+        pred = self.predict(users_embedding, lists_embedding)
+        loss = self.regularize(users_embedding, lists_embedding)
         return pred, loss
 
     def evaluate(self, propagate_result, users):
         '''
-        just for testing, compute scores of all bundles for `users` by `propagate_result`
+        just for testing, compute scores of all lists for `users` by `propagate_result`
         '''
         raise NotImplementedError
-

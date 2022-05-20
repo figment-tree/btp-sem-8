@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-__all__ = ['BGCN']
+__all__ = ['GCN', 'GAT']
 
-from .BGCN import BGCN, BGCN_Info
+from .GNN import GCN, GCN_Info, GAT, GAT_Info

@@ -26,7 +26,8 @@ class Logger(object):
         group_str = map(lambda x: '-'.join(x), group)
         return ', '.join(group_str)
 
-    def __init__(self, log_path, checkpoint_policy='best', checkpoint_interval=None, checkpoint_target=None):
+    def __init__(self, log_path, checkpoint_policy='best',
+                 checkpoint_interval=None, checkpoint_target=None):
         '''
         Args:
         - log_path: the dir of every model's log dir
@@ -58,7 +59,7 @@ class Logger(object):
             string.ascii_uppercase + string.digits) for _ in range(8))
         self.log_path = log_path
         #  self.time_path = time.strftime(
-            #  '%m-%d-%H-%M-%S-', time.localtime(time.time()))+self.random
+        #  '%m-%d-%H-%M-%S-', time.localtime(time.time()))+self.random
         self.time_path = time.strftime(
             '%m-%d-%H-%M-%S-', time.localtime(time.time())) + CONFIG['note']
 
@@ -91,9 +92,10 @@ class Logger(object):
         '''
         self.modelinfo = modelinfo
         self.env = envinfo
-        if self.cnt is 0:
+        if self.cnt == 0:
             self.csv_log.write('hash, {}, {}\n'.format(
-                self.modelinfo.get_csv_title(), self.get_metric_csv_title(metrics)))
+                self.modelinfo.get_csv_title(),
+                self.get_metric_csv_title(metrics)))
         self.cnt += 1
         self._metrics_log = None
 
@@ -106,19 +108,21 @@ class Logger(object):
             for metric in metrics:
                 self._metrics_log[metric.get_title()].append(metric.metric)
         with open(os.path.join(
-                self.root_path, '{}.json'.format(self.get_model_Id(self.modelinfo))), 'w') as f:
+                self.root_path,
+                '{}.json'.format(self.get_model_Id(self.modelinfo))), 'w') as f:
             dump(self._metrics_log, f)
         # save model
         if self.checkpoint_policy == 'always':
             self.checkpoint_epoch += 1
             if self.checkpoint_epoch % self.checkpoint_interval == 0:
                 model_path = os.path.join(
-                    self.root_path, '{}.pth'.format(self.get_model_Id(self.modelinfo)))
+                    self.root_path,
+                    '{}.pth'.format(self.get_model_Id(self.modelinfo)))
                 torch.save(model.state_dict(), model_path)
         elif self.checkpoint_policy == 'best':
             for target in self.checkpoint_target:
                 if self.metrics_log[target][-1] == max(self.metrics_log[target]):
-                    model_path = os.path.join(self.root_path, '{}_{}.pth'.format(
+                    model_path = os.path.join(self.root_path,'{}_{}.pth'.format(
                         self.get_model_Id(self.modelinfo), target))
                     torch.save(model.state_dict(), model_path)
 

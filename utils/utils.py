@@ -10,7 +10,7 @@ def show(metrics_log):
     x = range(0, len(list(metrics_log.values())[0]))
     i = 1
     columns = 2
-    rows = ceil(len(metrics_log)/columns)
+    rows = ceil(len(metrics_log) / columns)
     for k, v in metrics_log.items():
         plt.subplot(rows, columns, i)
         plt.plot(x, v, '.-')
@@ -32,11 +32,11 @@ def get_perf(metrics_log, window_size, target, show=True):
         for k, v in metrics_log.items():
             maxs[k] = np.mean(v)
     else:
-        for i in range(length-window_size):
-            now = np.mean(metrics_log[target][i:i+window_size])
+        for i in range(length - window_size):
+            now = np.mean(metrics_log[target][i:i + window_size])
             if now > maxs[target]:
                 for k, v in metrics_log.items():
-                    maxs[k] = np.mean(v[i:i+window_size])
+                    maxs[k] = np.mean(v[i:i + window_size])
     if show:
         for k, v in maxs.items():
             print('{}:{:.5f}'.format(k, v), end=' ')
@@ -46,7 +46,7 @@ def get_perf(metrics_log, window_size, target, show=True):
 def check_overfitting(metrics_log, target, threshold=0.02, show=False):
     maxs = get_perf(metrics_log, 1, target, False)
     assert target in maxs
-    overfit = (maxs[target]-metrics_log[target][-1]) > threshold
+    overfit = (maxs[target] - metrics_log[target][-1]) > threshold
     if overfit and show:
         print('***********overfit*************')
         print('best:', end=' ')
@@ -62,7 +62,9 @@ def check_overfitting(metrics_log, target, threshold=0.02, show=False):
 
 
 def early_stop(metric_log, early, threshold=0.01):
-    if len(metric_log) >= 2 and metric_log[-1] < metric_log[-2] and metric_log[-1] > threshold:
-        return early-1
+    if (len(metric_log) >= 2 and
+        metric_log[-1] < metric_log[-2] and
+            metric_log[-1] > threshold):
+        return early - 1
     else:
         return early

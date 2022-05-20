@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import torch
-import numpy as np
 
 _is_hit_cache = {}
+
 
 def get_is_hit(scores, ground_truth, topk):
     global _is_hit_cache
@@ -57,7 +57,8 @@ class _Metric:
     def stop(self):
         global _is_hit_cache
         _is_hit_cache = {}
-        self._metric = self._sum/self._cnt
+        self._metric = self._sum / self._cnt
+
 
 class Recall(_Metric):
     '''
@@ -77,7 +78,8 @@ class Recall(_Metric):
         is_hit = is_hit.sum(dim=1)
         num_pos = ground_truth.sum(dim=1)
         self._cnt += scores.shape[0] - (num_pos == 0).sum().item()
-        self._sum += (is_hit/(num_pos+self.epison)).sum().item()
+        self._sum += (is_hit / (num_pos + self.epison)).sum().item()
+
 
 class NDCG(_Metric):
     '''
@@ -86,8 +88,8 @@ class NDCG(_Metric):
     '''
 
     def DCG(self, hit, device=torch.device('cpu')):
-        hit = hit/torch.log2(torch.arange(2, self.topk+2,
-                                          device=device, dtype=torch.float))
+        hit = hit / torch.log2(torch.arange(2, self.topk + 2,
+                                            device=device, dtype=torch.float))
         return hit.sum(-1)
 
     def IDCG(self, num_pos):
@@ -112,29 +114,6 @@ class NDCG(_Metric):
         num_pos = ground_truth.sum(dim=1).clamp(0, self.topk).to(torch.long)
         dcg = self.DCG(is_hit, device)
         idcg = self.IDCGs[num_pos]
-        ndcg = dcg/idcg.to(device)
+        ndcg = dcg / idcg.to(device)
         self._cnt += scores.shape[0] - (num_pos == 0).sum().item()
         self._sum += ndcg.sum().item()
-
-
-class MRR(_Metric):
-    '''
-    Mean reciprocal rank in top-k samples
-    '''
-
-    def __init__(self, topk):
-        super().__init__()
-        self.topk = topk
-        self.denominator = torch.arange(1, self.topk+1, dtype=torch.float)
-
-    def get_title(self):
-        return "MRR@{}".format(self.topk)
-
-    def __call__(self, scores, ground_truth):
-        device = scores.device
-        is_hit = get_is_hit(scores, ground_truth, self.topk)
-        is_hit /= self.denominator.to(device)
-        first_hit_rr = is_hit.max(dim=1)[0]
-        num_pos = ground_truth.sum(dim=1)
-        self._cnt += scores.shape[0] - (num_pos == 0).sum().item()
-        self._sum += first_hit_rr.sum().item()
